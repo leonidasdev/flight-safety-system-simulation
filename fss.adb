@@ -246,9 +246,6 @@ package body fss is
                Calculated_S := Calculated_S + Roll_Additional_Speed;
             end if;
 
-            -- Actualizar velocidad
-            Set_Speed (Calculated_S);
-
             -- Control alta velocidad y luces
             if Calculated_S > High_Speed then
                Set_Speed (High_Speed);
