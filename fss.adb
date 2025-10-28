@@ -178,6 +178,7 @@ package body fss is
         Current_S: Speed_Samples_Type := 0;
 
         Calculated_S: Speed_Samples_type := 0; 
+        Input_Speed: Speed_Samples_Type := 0;
         Target_Pitch: Pitch_Samples_Type := 0;
         Target_Roll: Roll_Samples_Type := 0; 
         
@@ -216,18 +217,19 @@ package body fss is
 
             -- Control alta velocidad y luces
             if Calculated_S > Max_Speed then
-               Set_Speed (Max_Speed);
+               Input_Speed := Max_Speed;
                Light_1 (Off);
                Light_2 (On);
             elsif Calculated_S < Min_Speed then
-               Set_Speed (Min_Speed);
+               Input_Speed := Min_Speed;
                Light_1 (Off);
                Light_2 (On);
             else
-              Set_Speed (Calculated_S);
+              Input_Speed := Calculated_S;
               Light_2 (Off);
               Light_1 (On);
             end if;
+            Set_Speed (Input_Speed);
 
             -- Display de velocidad
             Current_S := Read_Speed;
