@@ -105,7 +105,7 @@ package body fss is
 
    task body Task_Control_Cabeceo_Altitud is
         Next_Instance: Time;
-        Interval: Time_Span := Milliseconds(200);
+        Interval: constant Time_Span := Milliseconds(200);
 
         Current_J: Joystick_Samples_Type;
         Current_A: Altitude_Samples_Type;
@@ -163,7 +163,7 @@ package body fss is
 
    task body Task_Control_Alabeo is
         Next_Instance: Time;
-        Interval: Time_Span := Milliseconds(200);
+        Interval: constant Time_Span := Milliseconds(200);
 
         Current_J: Joystick_Samples_Type := (0,0);
         Current_R: Roll_Samples_Type;
@@ -188,7 +188,7 @@ package body fss is
 
           -- Si roll se encuentra entre +45/-45 grados el FSS lo refleja en la posicion de la nave
           if (Target_Roll > Min_Roll and Target_Roll < Max_Roll) then
-            Set_Aircraft_Roll (Target_Roll);
+            Pitch_Roll.Change_Aircraft_Roll (Target_Roll);
             Current_R := Target_Roll;
           end if;
 
@@ -209,13 +209,14 @@ package body fss is
 
    task body Task_Control_Velocidad is
         Next_Instance: Time;
-        Interval: Time_Span := Milliseconds(300);
+        Interval: constant Time_Span := Milliseconds(300);
 
         Current_Pw: Power_Samples_Type := 0;
         Current_J: Joystick_Samples_Type := (0,0);
         Current_S: Speed_Samples_Type := 0;
 
         Calculated_S: Speed_Samples_type := 0; 
+        Input_Speed: Speed_Samples_Type := 0;
         Target_Pitch: Pitch_Samples_Type := 0;
         Target_Roll: Roll_Samples_Type := 0; 
         
@@ -254,21 +255,22 @@ package body fss is
 
             -- Control alta velocidad y luces
             if Calculated_S > Max_Speed then
-               Set_Speed (Max_Speed);
+               Input_Speed := Max_Speed;
                Light_1 (Off);
                Light_2 (On);
             elsif Calculated_S < Min_Speed then
-               Set_Speed (Min_Speed);
+               Input_Speed := Min_Speed;
                Light_1 (Off);
                Light_2 (On);
             else
-              Set_Speed (Calculated_S);
+              Input_Speed := Calculated_S;
               Light_2 (Off);
               Light_1 (On);
             end if;
+            Set_Speed (Input_Speed);
 
             -- Display de velocidad
-            Current_S := Read_Speed;
+            Current_S := Current_Speed_Altitude.Get_Speed;
             Display_Speed(Current_S);
 
             Finish_Activity ("Task_Control_Velocidad");
@@ -279,7 +281,7 @@ package body fss is
 
     task body Task_Deteccion_Obstaculos is
         Next_Instance: Time;
-        Interval: Time_Span := Milliseconds(250);
+        Interval: constant Time_Span := Milliseconds(250);
 
         Current_D: Distance_Samples_Type;
         Current_L: Light_Samples_Type;
@@ -287,20 +289,15 @@ package body fss is
         Current_P: PilotPresence_Samples_Type;
 
         Time_Collision: Duration;
-
         Alarm_Time_Threshold: Duration;
         Time_Collision_Threshold: Duration;
 
         Light_Threshold: constant Light_Samples_Type := 500;
-
         Max_D: constant Distance_Samples_Type := 5000;
-
         Alarm_Time_Threshold_General: constant Duration := 10.0;
         Alarm_Time_Threshold_Bad_Conditions: constant Duration := 15.0;
-
         Time_Collision_Threshold_General: constant Duration := 5.0;
         Time_Collision_Threshold_Bad_Conditions: constant Duration := 10.0;
-
         Emergency_Roll: constant Roll_Samples_Type := 45;
         Emergency_Roll_Duration: constant Time_Span:= Milliseconds(3000);
 
@@ -330,9 +327,10 @@ package body fss is
             -- Maniobra de desvio automatico
             if (Time_Collision < Time_Collision_Threshold) then
               -- 45 grados roll a la derecha durante 3 segundos
+              -- TODO Plazo maximo de 80 milisegundos para ejecutar la maniobra
               Pitch_Roll.Change_Aircraft_Roll (Emergency_Roll);
               delay until (Clock + Emergency_Roll_Duration);
-              -- estabilizar roll
+              -- Estabilizar roll
               Pitch_Roll.Change_Aircraft_Roll (0);
             end if;
 
