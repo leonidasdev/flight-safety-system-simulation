@@ -279,14 +279,18 @@ package body fss is
 
         Time_Collision: Duration;
 
+        Alarm_Time_Threshold: Duration;
+        Time_Collision_Threshold: Duration;
+
         Light_Threshold: constant Light_Samples_Type := 500;
+
         Max_D: constant Distance_Samples_Type := 5000;
+
         Alarm_Time_Threshold_General: constant Duration := 10.0;
         Alarm_Time_Threshold_Bad_Conditions: constant Duration := 15.0;
-        Alarm_Time_Threshold: Duration;
+
         Time_Collision_Threshold_General: constant Duration := 5.0;
         Time_Collision_Threshold_Bad_Conditions: constant Duration := 10.0;
-        Time_Collision_Threshold: Duration;
 
         Emergency_Roll: constant Roll_Samples_Type := 45;
         Emergency_Roll_Duration: constant Time_Span:= Milliseconds(3000);
@@ -299,7 +303,7 @@ package body fss is
             -- Detectar variables externas
             Read_Distance(Current_D);
             Read_Light_Intensity(Current_L);
-            Current_S := Read_Speed;
+            Current_S := Current_Speed_Altitude.Read_Speed;
             Current_P := Read_PilotPresence;
             
             -- Calcular tiempo de colision
