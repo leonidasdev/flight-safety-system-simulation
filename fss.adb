@@ -128,7 +128,7 @@ package body fss is
           Start_Activity ("Task_Control_Cabeceo_Altitud");  
 
           -- Lee Joystick del piloto, altitud, pitch de la aeronave
-          Current_A := Read_Altitude;
+          Current_A := Current_Speed_Altitude.Read_Altitude;
           Pitch_Roll_Command.Get_Joystick (Current_J);
           Current_P := Read_Pitch;
           
@@ -137,12 +137,12 @@ package body fss is
 
           -- Si pitch se encuentra entre +30/-30 grados el FSS lo refleja en la posicion de la nave
           if (Target_Pitch > Min_Pitch and Target_Pitch < Max_Pitch) then
-            Set_Aircraft_Pitch (Target_Pitch);
+            Pitch_Roll.Change_Aircraft_Pitch (Target_Pitch);
           end if;
 
           -- Regula si altitud sobrepasa limite de altitud baja o alta
           if (Current_A < Min_Altitude or Current_A > Max_Altitude) then
-            Set_Aircraft_Pitch (0);
+            Pitch_Roll.Change_Aircraft_Pitch (0);
           end if;
 
           -- Alerta mediante luces en caso de altitud alta o baja
