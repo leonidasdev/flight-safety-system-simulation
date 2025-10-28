@@ -217,8 +217,8 @@ package body fss is
         Pitch_Roll_Additional_Speed: constant Speed_Samples_Type := 200;
         Pitch_Additional_Speed: constant Speed_Samples_Type := 150;
         Roll_Additional_Speed: constant Speed_Samples_Type := 100;
-        High_Speed: constant Speed_Samples_type := 1000;
-        Low_Speed: constant Speed_Samples_Type := 300;
+        Max_Speed: constant Speed_Samples_type := 1000;
+        Min_Speed: constant Speed_Samples_Type := 300;
     begin
         Next_Instance := Big_Bang + Interval;
         loop
@@ -248,12 +248,12 @@ package body fss is
             end if;
 
             -- Control alta velocidad y luces
-            if Calculated_S > High_Speed then
-               Set_Speed (High_Speed);
+            if Calculated_S > Max_Speed then
+               Set_Speed (Max_Speed);
                Light_1 (Off);
                Light_2 (On);
-            elsif Calculated_S < Low_Speed then
-               Set_Speed (Low_Speed);
+            elsif Calculated_S < Min_Speed then
+               Set_Speed (Min_Speed);
                Light_1 (Off);
                Light_2 (On);
             else
