@@ -207,14 +207,11 @@ package body fss is
         Interval: Time_Span := Milliseconds(300);
 
         Current_Pw: Power_Samples_Type := 0;
-        Calculated_S: Speed_Samples_type := 0; 
-
         Current_J: Joystick_Samples_Type := (0,0);
+
+        Calculated_S: Speed_Samples_type := 0; 
         Target_Pitch: Pitch_Samples_Type := 0;
         Target_Roll: Roll_Samples_Type := 0; 
-             
-        Current_D: Distance_Samples_Type := 0;
-        Current_L: Light_Samples_Type := 0;
         
         Pitch_Roll_Additional_Speed: constant Speed_Samples_Type := 200;
         Pitch_Additional_Speed: constant Speed_Samples_Type := 150;
