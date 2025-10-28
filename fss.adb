@@ -209,6 +209,7 @@ package body fss is
 
         Current_Pw: Power_Samples_Type := 0;
         Current_J: Joystick_Samples_Type := (0,0);
+        Current_S: Speed_Samples_Type := 0;
 
         Calculated_S: Speed_Samples_type := 0; 
         Target_Pitch: Pitch_Samples_Type := 0;
@@ -261,8 +262,12 @@ package body fss is
               Light_2 (Off);
               Light_1 (On);
             end if;
-            
-            Finish_Activity ("Task_Control_Velocidad"); 
+
+            -- Display de velocidad
+            Current_S := Read_Speed;
+            Display_Speed(Current_S);
+
+            Finish_Activity ("Task_Control_Velocidad");
             delay until Next_Instance;
             Next_Instance := Next_Instance + Interval;
         end loop;
