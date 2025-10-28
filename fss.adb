@@ -128,7 +128,7 @@ package body fss is
           Start_Activity ("Task_Control_Cabeceo_Altitud");  
 
           -- Lee Joystick del piloto, altitud, pitch de la aeronave
-          Current_A := Current_Speed_Altitude.Read_Altitude;
+          Current_A := Current_Speed_Altitude.Get_Altitude;
           Pitch_Roll_Command.Get_Joystick (Current_J);
           Current_P := Read_Pitch;
           
