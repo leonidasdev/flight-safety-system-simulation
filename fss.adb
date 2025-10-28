@@ -127,15 +127,14 @@ package body fss is
       loop
           Start_Activity ("Task_Control_Cabeceo_Altitud");  
 
-          -- Lee Joystick del piloto, altitud, pitch de la aeronave
+          -- Lee Joystick del piloto y altitud de la aeronave
           Current_A := Current_Speed_Altitude.Get_Altitude;
           Pitch_Roll_Command.Get_Joystick (Current_J);
-          Current_P := Read_Pitch;
           
           -- Establece Pitch deseado en la aeronave
           Target_Pitch := Pitch_Samples_Type (Current_J(x));
 
-          -- Si pitch se encuentra entre +30/-30 grados el FSS lo refleja en la posicion de la nave
+          -- Si pitch deseado se encuentra entre +30/-30 grados el FSS lo refleja en la posicion de la nave
           if (Target_Pitch > Min_Pitch and Target_Pitch < Max_Pitch) then
             Pitch_Roll.Change_Aircraft_Pitch (Target_Pitch);
           end if;
@@ -153,6 +152,11 @@ package body fss is
             Light_1 (Off);
             Light_2 (On);
           end if;
+
+          -- Display de pitch y altitud
+          Current_P := Read_Pitch;
+          Display_Pitch (Current_P);
+          Display_Altitude (Current_A);
 
           Finish_Activity ("Task_Control_Cabeceo_Altitud");
           -- Se realiza 5 veces por segundo
