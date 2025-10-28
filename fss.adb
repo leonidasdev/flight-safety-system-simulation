@@ -41,6 +41,23 @@ package body fss is
       end Get_Joystick;
     end Pitch_Roll_Command;
 
+    protected Pitch_Roll is
+      procedure Change_Aircraft_Pitch (P: in Pitch_Samples_Type);
+      procedure Change_Aircraft_Roll (R: in Roll_Samples_Type);
+    end Pitch_Roll;
+
+    protected body Pitch_Roll is
+      procedure Change_Aircraft_Pitch (P: in Pitch_Samples_Type) is
+      begin
+        Set_Aircraft_Pitch (P);
+      end Change_Aircraft_Pitch;
+      
+      procedure Change_Aircraft_Roll (R: in Roll_Samples_Type) is
+      begin
+        Set_Aircraft_Roll (R);
+      end Change_Aircraft_Roll;
+    end Pitch_Roll;
+
     protected Current_Speed_Altitude is
       function Get_Speed return Speed_Samples_Type;
       function Get_Altitude return Speed_Samples_Type;
@@ -195,10 +212,6 @@ package body fss is
         Current_J: Joystick_Samples_Type := (0,0);
         Target_Pitch: Pitch_Samples_Type := 0;
         Target_Roll: Roll_Samples_Type := 0; 
-        Aircraft_Pitch: Pitch_Samples_Type; 
-        Aircraft_Roll: Roll_Samples_Type;
-        Change_Pitch: Pitch_Increment_Type; 
-        Change_Roll: Roll_Increment_Type; 
              
         Current_D: Distance_Samples_Type := 0;
         Current_L: Light_Samples_Type := 0;
@@ -206,9 +219,8 @@ package body fss is
         Pitch_Roll_Additional_Speed: constant Speed_Samples_Type := 200;
         Pitch_Additional_Speed: constant Speed_Samples_Type := 150;
         Roll_Additional_Speed: constant Speed_Samples_Type := 100;
-        Capped_Upper_Speed: constant Speed_Samples_type := 1000;
-        Capped_Lower_Speed: constant Speed_Samples_Type := 300;
-        Roll_Emergencia: constant Roll_Samples_Type := 40;
+        High_Speed: constant Speed_Samples_type := 1000;
+        Low_Speed: constant Speed_Samples_Type := 300;
     begin
         Next_Instance := Big_Bang + Interval;
         loop
@@ -241,12 +253,12 @@ package body fss is
             Set_Speed (Calculated_S);
 
             -- Control alta velocidad y luces
-            if Calculated_S > Capped_Upper_Speed then
-               Set_Speed (Capped_Upper_Speed);
+            if Calculated_S > High_Speed then
+               Set_Speed (High_Speed);
                Light_1 (Off);
                Light_2 (On);
-            elsif Calculated_S < Capped_Lower_Speed then
-               Set_Speed (Capped_Lower_Speed);
+            elsif Calculated_S < Low_Speed then
+               Set_Speed (Low_Speed);
                Light_1 (Off);
                Light_2 (On);
             else
@@ -280,6 +292,10 @@ package body fss is
         Time_Collision_Threshold_General: constant Duration := 5.0;
         Time_Collision_Threshold_Bad_Conditions: constant Duration := 10.0;
         Time_Collision_Threshold: Duration;
+
+        Emergency_Roll: constant Roll_Samples_Type := 45;
+        Emergency_Roll_Duration: constant Time_Span:= Milliseconds(3000);
+
     begin
         Next_Instance := Big_Bang + Interval;
         loop
@@ -306,10 +322,10 @@ package body fss is
             -- Maniobra de desvio automatico
             if (Time_Collision < Time_Collision_Threshold) then
               -- 45 grados roll a la derecha durante 3 segundos
-              Set_Aircraft_Roll (Emergency_Roll);
-              delay until (Clock + Milliseconds(3000));
+              Pitch_Roll.Change_Aircraft_Roll (Emergency_Roll);
+              delay until (Clock + Emergency_Roll_Duration);
               -- estabilizar roll
-              Set_Aircraft_Roll (0);
+              Pitch_Roll.Change_Aircraft_Roll (0);
             end if;
 
             -- Indicar distancia de obstaculo si existe
