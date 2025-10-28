@@ -114,9 +114,8 @@ package body fss is
         Current_J: Joystick_Samples_Type;
         Current_A: Altitude_Samples_Type;
         Current_P: Pitch_Samples_Type;
+
         Target_Pitch: Pitch_Samples_Type := 0;
-        Aircraft_Pitch: Pitch_Samples_Type; 
-        Change_Pitch: Pitch_Increment_Type; 
 
         Max_Pitch: constant Pitch_Samples_Type := 30;
         Min_Pitch: constant Pitch_Samples_Type := -30;
@@ -168,7 +167,9 @@ package body fss is
 
         Current_J: Joystick_Samples_Type := (0,0);
         Current_R: Roll_Samples_Type;
+        
         Target_Roll: Roll_Samples_Type; 
+
         Min_Roll: constant Roll_Samples_Type := -45;
         Max_Roll: constant Roll_Samples_Type := 45;
         Low_Roll: constant Roll_Samples_Type := -35;
