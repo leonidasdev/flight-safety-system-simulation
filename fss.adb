@@ -177,7 +177,8 @@ package body fss is
         Min_Roll: constant Roll_Samples_Type := -45;
         Max_Roll: constant Roll_Samples_Type := 45;
         Low_Roll: constant Roll_Samples_Type := -35;
-        High_Roll: constant Roll_Samples_Type := -35;
+        High_Roll: constant Roll_Samples_Type := 35;
+        Warning_Message: constant String := "WARNING: HIGH ROLL ANGLE!";
    begin
       loop
           Start_Activity ("Task_Control_Alabeo");  
@@ -197,8 +198,11 @@ package body fss is
 
           -- Mensaje en display en caso de roll alto o bajo
           if (Current_R < Low_Roll or Current_R > High_Roll) then
-            Display_Roll (Current_R);
+            Display_Message (Warning_Message);
           end if;
+
+          -- Display de roll
+          Display_Roll (Current_R);
 
           Finish_Activity ("Task_Control_Alabeo");
           -- Se realiza 5 veces por segundo
