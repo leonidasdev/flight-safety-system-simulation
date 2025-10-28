@@ -97,10 +97,6 @@ package body fss is
         pragma Priority (12);
     end Task_Deteccion_Obstaculos;
 
-    task Task_Prueba_Sensores_Piloto is
-        pragma Priority (10);
-    end Task_Prueba_Sensores_Piloto;
-
     -----------------------------------------------------------------------
     ------------- body of tasks 
     -----------------------------------------------------------------------
@@ -355,34 +351,6 @@ package body fss is
             Next_Instance := Next_Instance + Interval;
         end loop;
     end Task_Deteccion_Obstaculos;
-
-    task body Task_Prueba_Sensores_Piloto is
-        Next_Instance: Time;
-        Interval: Time_Span := Milliseconds(300);
-
-        Current_Pp: PilotPresence_Samples_Type := 1;
-        Current_Pb: PilotButton_Samples_Type := 0;
-    begin
-        Next_Instance := Big_Bang + Interval;
-        loop
-            Start_Activity ("Task_Prueba_Sensores_Piloto");                
-            -- Prueba presencia piloto
-            Current_Pp := Read_PilotPresence;
-            if (Current_Pp = 0) then 
-                Alarm (1); 
-            end if;   
-            Display_Pilot_Presence (Current_Pp);
-                     
-            -- Prueba botón para selección de modo 
-            Current_Pb := Read_PilotButton;            
-            Display_Pilot_Button (Current_Pb); 
-            
-            Finish_Activity ("Task_Prueba_Sensores_Piloto");  
-            delay until Next_Instance;
-            Next_Instance := Next_Instance + Interval;
-        end loop;
-    end Task_Prueba_Sensores_Piloto;
-
 
     ----------------------------------------------------------------------
     ------------- procedimientos para probar los dispositivos 
