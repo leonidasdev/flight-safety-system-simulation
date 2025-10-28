@@ -60,7 +60,7 @@ package body fss is
 
     protected Current_Speed_Altitude is
       function Get_Speed return Speed_Samples_Type;
-      function Get_Altitude return Speed_Samples_Type;
+      function Get_Altitude return Altitude_Samples_Type;
     end Current_Speed_Altitude;
 
     protected body Current_Speed_Altitude is
@@ -303,7 +303,7 @@ package body fss is
             -- Detectar variables externas
             Read_Distance(Current_D);
             Read_Light_Intensity(Current_L);
-            Current_S := Current_Speed_Altitude.Read_Speed;
+            Current_S := Current_Speed_Altitude.Get_Speed;
             Current_P := Read_PilotPresence;
             
             -- Calcular tiempo de colision
