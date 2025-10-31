@@ -94,7 +94,7 @@ package body fss is
     end Task_Control_Velocidad;
 
     task Task_Deteccion_Obstaculos is
-        pragma Priority (12);
+        pragma Priority (20);
     end Task_Deteccion_Obstaculos;
 
     -----------------------------------------------------------------------
