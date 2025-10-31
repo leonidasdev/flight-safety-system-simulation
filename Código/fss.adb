@@ -67,7 +67,7 @@ package body fss is
 
    task body Task_Control_Cabeceo_Altitud is
         Next_Instance: Time;
-        Interval: Time_Span := Milliseconds(200);
+        Interval: constant Time_Span := Milliseconds(200);
 
         Current_J: Joystick_Samples_Type;
         Current_A: Altitude_Samples_Type;
@@ -125,7 +125,7 @@ package body fss is
 
    task body Task_Control_Alabeo is
         Next_Instance: Time;
-        Interval: Time_Span := Milliseconds(200);
+        Interval: constant Time_Span := Milliseconds(200);
 
         Current_J: Joystick_Samples_Type := (0,0);
         Current_R: Roll_Samples_Type;
@@ -171,7 +171,7 @@ package body fss is
 
    task body Task_Control_Velocidad is
         Next_Instance: Time;
-        Interval: Time_Span := Milliseconds(300);
+        Interval: constant Time_Span := Milliseconds(300);
 
         Current_Pw: Power_Samples_Type := 0;
         Current_J: Joystick_Samples_Type := (0,0);
