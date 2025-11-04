@@ -6,6 +6,20 @@ with System; use System;
 with Tools; use Tools;
 with devicesFSS_V1; use devicesFSS_V1;
 
+-- Integrantes del grupo:
+-- Leonardo Chen
+-- Pablo Gil
+-- Mario Lorenzo
+-- Zixin Zheng
+
+-- Tareas implementadas:
+-- Control de cabeceo y altitud (Task_Control_Cabeceo_Altitud)
+-- Control de alabeo (Task_Control_Alabeo)
+-- Control de velocidad (Task_Control_Velocidad)
+
+-- Objetos protegidos implementados:
+-- Sincronizacion de datos de joystick (Pitch_Roll_Command)
+
 -- NO ACTIVAR ESTE PAQUETE MIENTRAS NO SE TENGA PROGRAMADA LA INTERRUPCION
 -- Packages needed to generate button interrupts       
 -- with Ada.Interrupts.Names;
