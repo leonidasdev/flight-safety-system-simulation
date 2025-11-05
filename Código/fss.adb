@@ -42,9 +42,16 @@ package body fss is
     ------------- declaration of protected objects 
     -----------------------------------------------------------------------
 
-    -- Aqui se declaran los objetos protegidos para los datos compartidos  
+    -- Aqui se declaran los objetos protegidos para los datos compartidos
 
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14), Task_Control_Alabeo (prio 13),
+    --               Task_Control_Velocidad (prio 15).
+    -- Techo (ceiling) = 15 (máxima prioridad de los llamadores).
+    -- Fuente del ceiling: en el Protocolo de Techo de Prioridad de Ada, el ceiling
+    -- del objeto protegido debe ser la máxima prioridad de las tareas que van a
+    -- llamar a sus operaciones; por eso se toma max(14,13,15) = 15.
     protected Pitch_Roll_Command is
+      pragma Priority (15);
       procedure Get_Joystick (J: out Joystick_Samples_Type);
     end Pitch_Roll_Command;
     
@@ -55,39 +62,53 @@ package body fss is
       end Get_Joystick;
     end Pitch_Roll_Command;
 
-    protected Pitch_Roll is
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14), Task_Control_Alabeo (prio 13),
+    --               Task_Control_Velocidad (prio 15), Task_Deteccion_Obstaculos (prio 20).
+    -- Techo (ceiling) = 20.
+    -- Fuente del ceiling: ceiling = max(14,13,15,20) = 20.
+    protected Pitch is
+      pragma Priority (20);
       procedure Change_Aircraft_Pitch (P: in Pitch_Samples_Type);
-      procedure Change_Aircraft_Roll (R: in Roll_Samples_Type);
-    end Pitch_Roll;
+    end Pitch;
 
-    protected body Pitch_Roll is
+    protected body Pitch is
       procedure Change_Aircraft_Pitch (P: in Pitch_Samples_Type) is
       begin
         Set_Aircraft_Pitch (P);
       end Change_Aircraft_Pitch;
-      
+    end Pitch;
+
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14), Task_Control_Alabeo (prio 13),
+    --               Task_Control_Velocidad (prio 15), Task_Deteccion_Obstaculos (prio 20).
+    -- Techo (ceiling) = 20.
+    -- Fuente del ceiling: ceiling = max(14,13,15,20) = 20.
+    protected Roll is
+      pragma Priority (20);
+      procedure Change_Aircraft_Roll (R: in Roll_Samples_Type);
+    end Roll;
+
+    protected body Roll is
       procedure Change_Aircraft_Roll (R: in Roll_Samples_Type) is
       begin
         Set_Aircraft_Roll (R);
       end Change_Aircraft_Roll;
-    end Pitch_Roll;
+    end Roll;
 
-    protected Current_Speed_Altitude is
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14), Task_Control_Velocidad (prio 15),
+    --               Task_Deteccion_Obstaculos (prio 20).
+    -- Techo (ceiling) = 20.
+    -- Fuente del ceiling: ceiling = max(14,15,20) = 20.
+    protected Current_Speed is
+      pragma Priority (20);
       function Get_Speed return Speed_Samples_Type;
-      function Get_Altitude return Altitude_Samples_Type;
-    end Current_Speed_Altitude;
+    end Current_Speed;
 
-    protected body Current_Speed_Altitude is
+    protected body Current_Speed is
       function Get_Speed return Speed_Samples_Type is
       begin
         return Read_Speed;
       end;
-      
-      function Get_Altitude return Altitude_Samples_Type is
-      begin
-        return Read_Altitude;
-      end;
-    end Current_Speed_Altitude;
+    end Current_Speed;
 
     -----------------------------------------------------------------------
     ------------- declaration of tasks 
@@ -138,7 +159,7 @@ package body fss is
           Start_Activity ("Task_Control_Cabeceo_Altitud");  
 
           -- Lee Joystick del piloto y altitud de la aeronave
-          Current_A := Current_Speed_Altitude.Get_Altitude;
+          Current_A := Read_Altitude;
           Pitch_Roll_Command.Get_Joystick (Current_J);
           
           -- Establece Pitch deseado en la aeronave
@@ -146,12 +167,12 @@ package body fss is
 
           -- Si pitch deseado se encuentra entre +30/-30 grados el FSS lo refleja en la posicion de la nave
           if (Target_Pitch > Min_Pitch and Target_Pitch < Max_Pitch) then
-            Pitch_Roll.Change_Aircraft_Pitch (Target_Pitch);
+            Pitch.Change_Aircraft_Pitch (Target_Pitch);
           end if;
 
           -- Regula si altitud sobrepasa limite de altitud baja o alta
           if (Current_A < Min_Altitude or Current_A > Max_Altitude) then
-            Pitch_Roll.Change_Aircraft_Pitch (0);
+            Pitch.Change_Aircraft_Pitch (0);
           end if;
 
           -- Alerta mediante luces en caso de altitud alta o baja
@@ -202,7 +223,7 @@ package body fss is
 
           -- Si roll se encuentra entre +45/-45 grados el FSS lo refleja en la posicion de la nave
           if (Target_Roll > Min_Roll and Target_Roll < Max_Roll) then
-            Pitch_Roll.Change_Aircraft_Roll (Target_Roll);
+            Roll.Change_Aircraft_Roll (Target_Roll);
             Current_R := Target_Roll;
           end if;
 
@@ -284,7 +305,7 @@ package body fss is
             Set_Speed (Input_Speed);
 
             -- Display de velocidad
-            Current_S := Current_Speed_Altitude.Get_Speed;
+            Current_S := Current_Speed.Get_Speed;
             Display_Speed(Current_S);
 
             Finish_Activity ("Task_Control_Velocidad");
@@ -323,7 +344,7 @@ package body fss is
             -- Detectar variables externas
             Read_Distance(Current_D);
             Read_Light_Intensity(Current_L);
-            Current_S := Current_Speed_Altitude.Get_Speed;
+            Current_S := Current_Speed.Get_Speed;
             Current_P := Read_PilotPresence;
             
             -- Calcular tiempo de colision
@@ -342,10 +363,10 @@ package body fss is
             if (Time_Collision < Time_Collision_Threshold) then
               -- 45 grados roll a la derecha durante 3 segundos
               -- TODO Plazo maximo de 80 milisegundos para ejecutar la maniobra
-              Pitch_Roll.Change_Aircraft_Roll (Emergency_Roll);
+              Roll.Change_Aircraft_Roll (Emergency_Roll);
               delay until (Clock + Emergency_Roll_Duration);
               -- Estabilizar roll
-              Pitch_Roll.Change_Aircraft_Roll (0);
+              Roll.Change_Aircraft_Roll (0);
             end if;
 
             -- Indicar distancia de obstaculo si existe
