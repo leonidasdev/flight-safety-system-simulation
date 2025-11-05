@@ -62,12 +62,12 @@ package body fss is
       end Get_Joystick;
     end Pitch_Roll_Command;
 
-    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14), Task_Control_Alabeo (prio 13),
-    --               Task_Control_Velocidad (prio 15), Task_Deteccion_Obstaculos (prio 20).
-    -- Techo (ceiling) = 20.
-    -- Fuente del ceiling: ceiling = max(14,13,15,20) = 20.
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14),
+    --               Task_Control_Velocidad (prio 15)
+    -- Fuente del ceiling: ceiling = max(14,15) = 15.
+    -- Techo (ceiling) = 15.
     protected Pitch is
-      pragma Priority (20);
+      pragma Priority (15);
       procedure Change_Aircraft_Pitch (P: in Pitch_Samples_Type);
     end Pitch;
 
@@ -78,10 +78,10 @@ package body fss is
       end Change_Aircraft_Pitch;
     end Pitch;
 
-    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14), Task_Control_Alabeo (prio 13),
-    --               Task_Control_Velocidad (prio 15), Task_Deteccion_Obstaculos (prio 20).
+    -- Accedido por: Task_Control_Alabeo (prio 13),
+    --               Task_Deteccion_Obstaculos (prio 20).
+    -- Fuente del ceiling: ceiling = max(13,20) = 20.
     -- Techo (ceiling) = 20.
-    -- Fuente del ceiling: ceiling = max(14,13,15,20) = 20.
     protected Roll is
       pragma Priority (20);
       procedure Change_Aircraft_Roll (R: in Roll_Samples_Type);
@@ -94,10 +94,10 @@ package body fss is
       end Change_Aircraft_Roll;
     end Roll;
 
-    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14), Task_Control_Velocidad (prio 15),
+    -- Accedido por: Task_Control_Velocidad (prio 15),
     --               Task_Deteccion_Obstaculos (prio 20).
     -- Techo (ceiling) = 20.
-    -- Fuente del ceiling: ceiling = max(14,15,20) = 20.
+    -- Fuente del ceiling: ceiling = max(15,20) = 20.
     protected Current_Speed is
       pragma Priority (20);
       function Get_Speed return Speed_Samples_Type;
