@@ -44,14 +44,14 @@ package body fss is
 
     -- Aqui se declaran los objetos protegidos para los datos compartidos
 
-    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14), Task_Control_Alabeo (prio 13),
-    --               Task_Control_Velocidad (prio 15).
-    -- Techo (ceiling) = 15 (máxima prioridad de los llamadores).
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 22), Task_Control_Alabeo (prio 21),
+    --               Task_Control_Velocidad (prio 18).
+    -- Techo (ceiling) = 22 (máxima prioridad de los llamadores).
     -- Fuente del ceiling: en el Protocolo de Techo de Prioridad de Ada, el ceiling
     -- del objeto protegido debe ser la máxima prioridad de las tareas que van a
-    -- llamar a sus operaciones; por eso se toma max(14,13,15) = 15.
+    -- llamar a sus operaciones; por eso se toma max(22,21,18) = 22. 
     protected Pitch_Roll_Command is
-      pragma Priority (15);
+      pragma Priority (22);
       procedure Get_Joystick (J: out Joystick_Samples_Type);
     end Pitch_Roll_Command;
     
@@ -62,12 +62,12 @@ package body fss is
       end Get_Joystick;
     end Pitch_Roll_Command;
 
-    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 14),
-    --               Task_Control_Velocidad (prio 15)
-    -- Fuente del ceiling: ceiling = max(14,15) = 15.
-    -- Techo (ceiling) = 15.
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 22),
+    --               Task_Control_Velocidad (prio 18)
+    -- Fuente del ceiling: ceiling = max(22,18) = 22.
+    -- Techo (ceiling) = 22.
     protected Pitch is
-      pragma Priority (15);
+      pragma Priority (22);
       procedure Change_Aircraft_Pitch (P: in Pitch_Samples_Type);
     end Pitch;
 
@@ -78,26 +78,49 @@ package body fss is
       end Change_Aircraft_Pitch;
     end Pitch;
 
-    -- Accedido por: Task_Control_Alabeo (prio 13),
-    --               Task_Deteccion_Obstaculos (prio 20).
-    -- Fuente del ceiling: ceiling = max(13,20) = 20.
-    -- Techo (ceiling) = 20.
+    -- Accedido por: Task_Control_Alabeo (prio 21),
+    --               Task_Deteccion_Obstaculos (prio 20),
+    -- Fuente del ceiling: ceiling = max(21,20) = 21.
+    -- Techo (ceiling) = 21.
     protected Roll is
-      pragma Priority (20);
+      pragma Priority (21);
       procedure Change_Aircraft_Roll (R: in Roll_Samples_Type);
+      procedure Change_Aircraft_Roll_Emergency (R: in Roll_Samples_Type);
+      procedure Activate_Emergency;
+      procedure Deactivate_Emergency;
+    private
+      Emergency_Active: Boolean := False;
     end Roll;
 
     protected body Roll is
       procedure Change_Aircraft_Roll (R: in Roll_Samples_Type) is
       begin
-        Set_Aircraft_Roll (R);
+        if not Emergency_Active then
+          Set_Aircraft_Roll (R);
+        end if;
       end Change_Aircraft_Roll;
+
+      procedure Change_Aircraft_Roll_Emergency (R: in Roll_Samples_Type) is
+      begin
+        if Emergency_Active then
+          Set_Aircraft_Roll (R);
+        end if;
+      end Change_Aircraft_Roll_Emergency;
+      procedure Activate_Emergency is 
+      begin
+        Emergency_Active := True;
+      end Activate_Emergency;
+
+      procedure Deactivate_Emergency is
+      begin
+        Emergency_Active := False;
+      end Deactivate_Emergency;
     end Roll;
 
-    -- Accedido por: Task_Control_Velocidad (prio 15),
+    -- Accedido por: Task_Control_Velocidad (prio 18),
     --               Task_Deteccion_Obstaculos (prio 20).
+    -- Fuente del ceiling: ceiling = max(18,20) = 20.
     -- Techo (ceiling) = 20.
-    -- Fuente del ceiling: ceiling = max(15,20) = 20.
     protected Current_Speed is
       pragma Priority (20);
       function Get_Speed return Speed_Samples_Type;
@@ -117,15 +140,15 @@ package body fss is
     -- Aqui se declaran las tareas que forman el STR
 
     task Task_Control_Cabeceo_Altitud is
-        pragma Priority (14);
+        pragma Priority (22);
     end Task_Control_Cabeceo_Altitud;
 
     task Task_Control_Alabeo is
-        pragma Priority (13);
+        pragma Priority (21);
     end Task_Control_Alabeo;
 
     task Task_Control_Velocidad is
-        pragma Priority (15);
+        pragma Priority (18);
     end Task_Control_Velocidad;
 
     task Task_Deteccion_Obstaculos is
@@ -155,6 +178,7 @@ package body fss is
         Min_Altitude: constant Altitude_Samples_Type := 2000;
         Max_Altitude: constant Altitude_Samples_Type := 10000;
    begin
+      Next_Instance := Big_Bang + Interval;
       loop
           Start_Activity ("Task_Control_Cabeceo_Altitud");  
 
@@ -211,6 +235,7 @@ package body fss is
         High_Roll: constant Roll_Samples_Type := 35;
         Warning_Message: constant String := "WARNING: HIGH ROLL ANGLE!";
    begin
+      Next_Instance := Big_Bang + Interval;
       loop
           Start_Activity ("Task_Control_Alabeo");  
 
@@ -250,7 +275,7 @@ package body fss is
         Current_J: Joystick_Samples_Type := (0,0);
         Current_S: Speed_Samples_Type := 0;
 
-        Calculated_S: Speed_Samples_type := 0; 
+        Calculated_S: Speed_Samples_Type := 0; 
         Input_Speed: Speed_Samples_Type := 0;
         Target_Pitch: Pitch_Samples_Type := 0;
         Target_Roll: Roll_Samples_Type := 0; 
@@ -258,7 +283,7 @@ package body fss is
         Pitch_Roll_Additional_Speed: constant Speed_Samples_Type := 200;
         Pitch_Additional_Speed: constant Speed_Samples_Type := 150;
         Roll_Additional_Speed: constant Speed_Samples_Type := 100;
-        Max_Speed: constant Speed_Samples_type := 1000;
+        Max_Speed: constant Speed_Samples_Type := 1000;
         Min_Speed: constant Speed_Samples_Type := 300;
     begin
         Next_Instance := Big_Bang + Interval;
@@ -327,6 +352,10 @@ package body fss is
         Alarm_Time_Threshold: Duration;
         Time_Collision_Threshold: Duration;
 
+        Iteration: Integer := 0;
+        Emergency_Active: Boolean := False;
+
+        Max_Iterations: constant Integer := 12; -- 3000ms / 250ms = 12 iteraciones para manterner el roll de emergencia 
         Light_Threshold: constant Light_Samples_Type := 500;
         Max_D: constant Distance_Samples_Type := 5000;
         Alarm_Time_Threshold_General: constant Duration := 10.0;
@@ -335,7 +364,6 @@ package body fss is
         Time_Collision_Threshold_Bad_Conditions: constant Duration := 10.0;
         Emergency_Roll: constant Roll_Samples_Type := 45;
         Emergency_Roll_Duration: constant Time_Span:= Milliseconds(3000);
-
     begin
         Next_Instance := Big_Bang + Interval;
         loop
@@ -348,7 +376,14 @@ package body fss is
             Current_P := Read_PilotPresence;
             
             -- Calcular tiempo de colision
-            Time_Collision := Duration (Float(Current_D) / Float(Current_S));
+            -- Proteger contra division por cero: si la velocidad es 0 asumimos
+            -- tiempo de colision 'infinito' para evitar excepciones y que
+            -- no se active la maniobra de emergencia por movimiento nulo.
+            if Current_S = 0 then
+              Time_Collision := Duration'Last;
+            else
+              Time_Collision := Duration (Float(Current_D) / Float(Current_S));
+            end if;
 
             -- Modificar thresholds para diferentes casos
             if (Current_L < Light_Threshold or Current_P = 0) then
@@ -361,12 +396,25 @@ package body fss is
 
             -- Maniobra de desvio automatico
             if (Time_Collision < Time_Collision_Threshold) then
+              Roll.Activate_Emergency;
+              Emergency_Active := True;
+              Iteration := 0;
+            end if;
+
+            -- Maniobra de emergencia
+            if (Emergency_Active) then
               -- 45 grados roll a la derecha durante 3 segundos
               -- TODO Plazo maximo de 80 milisegundos para ejecutar la maniobra
-              Roll.Change_Aircraft_Roll (Emergency_Roll);
-              delay until (Clock + Emergency_Roll_Duration);
-              -- Estabilizar roll
-              Roll.Change_Aircraft_Roll (0);
+              Roll.Change_Aircraft_Roll_Emergency (Emergency_Roll);
+              Iteration := Iteration + 1;
+              
+              if (Iteration >= Max_Iterations) then
+                -- Estabilizar roll
+                Roll.Change_Aircraft_Roll_Emergency (0);
+                -- Terminar maniobra de emergencia
+                Roll.Deactivate_Emergency;
+                Emergency_Active := False;
+              end if;
             end if;
 
             -- Indicar distancia de obstaculo si existe
