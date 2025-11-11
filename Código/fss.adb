@@ -44,7 +44,8 @@ package body fss is
 
     -- Aqui se declaran los objetos protegidos para los datos compartidos
 
-    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 11), Task_Control_Alabeo (prio 10),
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 11), 
+    --               Task_Control_Alabeo (prio 10),
     --               Task_Control_Velocidad (prio 8).
     -- Techo (ceiling) = 11 (máxima prioridad de los llamadores).
     -- Fuente del ceiling: en el Protocolo de Techo de Prioridad de Ada, el ceiling
@@ -62,9 +63,8 @@ package body fss is
       end Get_Joystick;
     end Pitch_Roll_Command;
 
-    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 11),
-    --               Task_Control_Velocidad (prio 8)
-    -- Fuente del ceiling: ceiling = max(11,8) = 11.
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 11)
+    -- Fuente del ceiling: ceiling = max(11) = 11.
     -- Techo (ceiling) = 11.
     protected Pitch is
       pragma Priority (11);
@@ -363,7 +363,6 @@ package body fss is
         Time_Collision_Threshold_General: constant Duration := 5.0;
         Time_Collision_Threshold_Bad_Conditions: constant Duration := 10.0;
         Emergency_Roll: constant Roll_Samples_Type := 45;
-        Emergency_Roll_Duration: constant Time_Span:= Milliseconds(3000);
     begin
         Next_Instance := Big_Bang + Interval;
         loop
