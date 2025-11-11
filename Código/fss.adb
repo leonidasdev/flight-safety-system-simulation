@@ -44,14 +44,14 @@ package body fss is
 
     -- Aqui se declaran los objetos protegidos para los datos compartidos
 
-    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 22), Task_Control_Alabeo (prio 21),
-    --               Task_Control_Velocidad (prio 18).
-    -- Techo (ceiling) = 22 (máxima prioridad de los llamadores).
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 11), Task_Control_Alabeo (prio 10),
+    --               Task_Control_Velocidad (prio 8).
+    -- Techo (ceiling) = 11 (máxima prioridad de los llamadores).
     -- Fuente del ceiling: en el Protocolo de Techo de Prioridad de Ada, el ceiling
     -- del objeto protegido debe ser la máxima prioridad de las tareas que van a
-    -- llamar a sus operaciones; por eso se toma max(22,21,18) = 22. 
+    -- llamar a sus operaciones; por eso se toma max(11,10,8) = 11. 
     protected Pitch_Roll_Command is
-      pragma Priority (22);
+      pragma Priority (11);
       procedure Get_Joystick (J: out Joystick_Samples_Type);
     end Pitch_Roll_Command;
     
@@ -62,12 +62,12 @@ package body fss is
       end Get_Joystick;
     end Pitch_Roll_Command;
 
-    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 22),
-    --               Task_Control_Velocidad (prio 18)
-    -- Fuente del ceiling: ceiling = max(22,18) = 22.
-    -- Techo (ceiling) = 22.
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 11),
+    --               Task_Control_Velocidad (prio 8)
+    -- Fuente del ceiling: ceiling = max(11,8) = 11.
+    -- Techo (ceiling) = 11.
     protected Pitch is
-      pragma Priority (22);
+      pragma Priority (11);
       procedure Change_Aircraft_Pitch (P: in Pitch_Samples_Type);
     end Pitch;
 
@@ -78,12 +78,12 @@ package body fss is
       end Change_Aircraft_Pitch;
     end Pitch;
 
-    -- Accedido por: Task_Control_Alabeo (prio 21),
-    --               Task_Deteccion_Obstaculos (prio 20),
-    -- Fuente del ceiling: ceiling = max(21,20) = 21.
-    -- Techo (ceiling) = 21.
+    -- Accedido por: Task_Control_Alabeo (prio 10),
+    --               Task_Deteccion_Obstaculos (prio 13),
+    -- Fuente del ceiling: ceiling = max(10,13) = 13.
+    -- Techo (ceiling) = 13.
     protected Roll is
-      pragma Priority (21);
+      pragma Priority (13);
       procedure Change_Aircraft_Roll (R: in Roll_Samples_Type);
       procedure Change_Aircraft_Roll_Emergency (R: in Roll_Samples_Type);
       procedure Activate_Emergency;
@@ -117,12 +117,12 @@ package body fss is
       end Deactivate_Emergency;
     end Roll;
 
-    -- Accedido por: Task_Control_Velocidad (prio 18),
-    --               Task_Deteccion_Obstaculos (prio 20).
-    -- Fuente del ceiling: ceiling = max(18,20) = 20.
-    -- Techo (ceiling) = 20.
+    -- Accedido por: Task_Control_Velocidad (prio 8),
+    --               Task_Deteccion_Obstaculos (prio 13).
+    -- Fuente del ceiling: ceiling = max(8,13) = 13.
+    -- Techo (ceiling) = 13.
     protected Current_Speed is
-      pragma Priority (20);
+      pragma Priority (13);
       function Get_Speed return Speed_Samples_Type;
     end Current_Speed;
 
@@ -140,19 +140,19 @@ package body fss is
     -- Aqui se declaran las tareas que forman el STR
 
     task Task_Control_Cabeceo_Altitud is
-        pragma Priority (22);
+        pragma Priority (11);
     end Task_Control_Cabeceo_Altitud;
 
     task Task_Control_Alabeo is
-        pragma Priority (21);
+        pragma Priority (10);
     end Task_Control_Alabeo;
 
     task Task_Control_Velocidad is
-        pragma Priority (18);
+        pragma Priority (8);
     end Task_Control_Velocidad;
 
     task Task_Deteccion_Obstaculos is
-        pragma Priority (20);
+        pragma Priority (13);
     end Task_Deteccion_Obstaculos;
 
     -----------------------------------------------------------------------
