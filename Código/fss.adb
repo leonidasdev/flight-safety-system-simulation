@@ -158,8 +158,8 @@ package body fss is
       procedure Change_Message (M: in String);
       function Get_Distance return Distance_Samples_Type;
       procedure Change_Distance (D: in Distance_Samples_Type);
-      function Get_Message_Received return Boolean;
-      function Get_Distance_Received return Boolean;
+      function Is_Message_Received return Boolean;
+      function Is_Distance_Received return Boolean;
       procedure Mark_Message_Received;
       procedure Mark_Distance_Received;
       procedure Clear_Message_Received;
@@ -242,11 +242,11 @@ package body fss is
       begin
         Distance := D;
       end;
-      function Get_Message_Received return Boolean is
+      function Is_Message_Received return Boolean is
       begin
         return Message_Received;
       end;
-      function Get_Distance_Received return Boolean is
+      function Is_Distance_Received return Boolean is
       begin
         return Distance_Received;
       end;
@@ -635,8 +635,8 @@ package body fss is
             Joystick := Status_Record.Get_Joystick;
             Pitch := Status_Record.Get_Pitch;
             Roll := Status_Record.Get_Roll;
-            Message_Received := Status_Record.Get_Message_Received;
-            Distance_Received := Status_Record.Get_Distance_Received;
+            Message_Received := Status_Record.Is_Message_Received;
+            Distance_Received := Status_Record.Is_Distance_Received;
             if (Message_Received) then
               Message := Status_Record.Get_Message;
             end if;
