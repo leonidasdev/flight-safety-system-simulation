@@ -2,7 +2,6 @@
 with Kernel.Serial_Output; use Kernel.Serial_Output;
 with Ada.Real_Time; use Ada.Real_Time;
 with System; use System;
-with Ada.Interrupts.Names;
 
 with Tools; use Tools;
 with devicesFSS_V1; use devicesFSS_V1;
@@ -18,6 +17,7 @@ with devicesFSS_V1; use devicesFSS_V1;
 -- Control de alabeo (Task_Control_Alabeo)
 -- Control de velocidad (Task_Control_Velocidad)
 -- Control de display (Task_Display)
+-- Control de modo automatico/manual (Task_Mode)
 
 -- Objetos protegidos implementados:
 -- Sincronizacion de datos de joystick (Pitch_Roll_Command)
@@ -25,11 +25,13 @@ with devicesFSS_V1; use devicesFSS_V1;
 -- Control de alabeo de la aeronave (Roll)
 -- Control de velocidad actual (Current_Speed)
 -- Registro de estado compartido (Status_Record)
+-- Seleccion de modo automatico/manual (Selected_Mode)
+-- Interrupcion del boton (Interruption_Handler)
 
 -- NO ACTIVAR ESTE PAQUETE MIENTRAS NO SE TENGA PROGRAMADA LA INTERRUPCION
 -- Packages needed to generate button interrupts       
--- with Ada.Interrupts.Names;
--- with Button_Interrupt; use Button_Interrupt;
+with Ada.Interrupts.Names;
+with Button_Interrupt; use Button_Interrupt;
 
 package body fss is
 
@@ -278,9 +280,8 @@ package body fss is
     --               Task_Control_Alabeo (prio 10),
     --               Task_Control_Velocidad (prio 8),
     --               Task_Deteccion_Obstaculos (prio 13).
-    --               Task_Display (prio 5).
     --               Task_Mode (prio 7).
-    -- Fuente del ceiling: ceiling = max(11,10,8,13,5,7) = 13.
+    -- Fuente del ceiling: ceiling = max(11,10,8,13,7) = 13.
     -- Techo (ceiling) = 13.
     protected Selected_Mode is
       pragma Priority (13);
@@ -301,7 +302,7 @@ package body fss is
       end;
     end Selected_Mode;
 
-    -- Accedido por: Tarea esporádica asociada a la interrupción del botón.
+    -- Tarea esporádica asociada a la interrupción del botón.
     protected Interruption_Handler is
       pragma Priority (20);
       procedure Interruption;
@@ -394,15 +395,23 @@ package body fss is
 
           -- Se establece un margen de +3/-3º, entre los cuales la nave permanece horizontal
           -- Si pitch deseado se encuentra entre +30/-30 grados el FSS lo refleja en la posicion de la nave
+          -- En modo automatico actualizar pitch de la aeronave
           if (Target_Pitch > Margin_Lower_Pitch and Target_Pitch < Margin_Upper_Pitch) then
-            Pitch.Change_Aircraft_Pitch (0);
+            if Selected_Mode.Is_Automatic then
+              Pitch.Change_Aircraft_Pitch (0);
+            end if;
           elsif (Target_Pitch > Min_Pitch and Target_Pitch < Max_Pitch) then
-            Pitch.Change_Aircraft_Pitch (Target_Pitch);
+            if Selected_Mode.Is_Automatic then
+              Pitch.Change_Aircraft_Pitch (Target_Pitch);
+            end if;
           end if;
 
           -- Regula si altitud sobrepasa limite de altitud baja o alta
+          -- En modo automatico actualizar pitch de la aeronave
           if (Current_A < Min_Altitude or Current_A > Max_Altitude) then
-            Pitch.Change_Aircraft_Pitch (0);
+            if Selected_Mode.Is_Automatic then
+              Pitch.Change_Aircraft_Pitch (0);
+            end if;
           end if;
 
           -- Alerta mediante luces en caso de altitud alta o baja
@@ -465,11 +474,16 @@ package body fss is
 
           -- Se establece un margen de +3/-3º, entre los cuales la nave permanece horizontal
           -- Si roll se encuentra entre +45/-45 grados el FSS lo refleja en la posicion de la nave
+          -- En modo automatico actualizar roll de la aeronave
           if (Target_Roll > Margin_Lower_Roll and Target_Roll < Margin_Upper_Roll) then
-            Roll.Change_Aircraft_Roll (0);
+            if Selected_Mode.Is_Automatic then
+              Roll.Change_Aircraft_Roll (0);
+            end if;
           elsif (Target_Roll > Min_Roll and Target_Roll < Max_Roll) then
-            Roll.Change_Aircraft_Roll (Target_Roll);
-            Current_R := Target_Roll;
+            if Selected_Mode.Is_Automatic then
+              Roll.Change_Aircraft_Roll (Target_Roll);
+              Current_R := Target_Roll;
+            end if;
           end if;
 
           -- Actualizar mensaje en display en caso de roll alto o bajo
@@ -555,7 +569,11 @@ package body fss is
               Light_2 (Off);
               Light_1 (On);
             end if;
-            Set_Speed (Input_Speed);
+
+            -- En modo automatico actualizar velocidad de la aeronave
+            if Selected_Mode.Is_Automatic then
+              Set_Speed (Input_Speed);
+            end if;
 
             -- Actualizar display de velocidad, potencia del piloto y joystick
             if Record_Update_Iteration = 0 then
@@ -631,22 +649,30 @@ package body fss is
 
             -- Maniobra de desvio automatico
             if (Time_Collision < Time_Collision_Threshold and not Emergency_Active) then
-              Roll.Activate_Emergency;
-              Emergency_Active := True;
-              Emergency_Iteration := 0;
+              -- En modo automatico activar maniobra de emergencia
+              if Selected_Mode.Is_Automatic then
+                Roll.Activate_Emergency;
+                Emergency_Active := True;
+                Emergency_Iteration := 0;
+              end if;
             end if;
 
             -- Maniobra de emergencia
+            -- En modo automatico actualizar roll de la aeronave
             if (Emergency_Active) then
               -- 45 grados roll a la derecha durante 3 segundos
-              Roll.Change_Aircraft_Roll_Emergency (Emergency_Roll);
+              if Selected_Mode.Is_Automatic then
+                Roll.Change_Aircraft_Roll_Emergency (Emergency_Roll);
+              end if;
               Emergency_Iteration := Emergency_Iteration + 1;
               
               if (Emergency_Iteration >= Max_Emergency_Iterations) then
-                -- Estabilizar roll
-                Roll.Change_Aircraft_Roll_Emergency (0);
-                -- Terminar maniobra de emergencia
-                Roll.Deactivate_Emergency;
+                -- Estabilizar roll a 0 grados
+                if Selected_Mode.Is_Automatic then
+                  Roll.Change_Aircraft_Roll_Emergency (0);
+                  -- Terminar maniobra de emergencia
+                  Roll.Deactivate_Emergency;
+                end if;
                 Emergency_Active := False;
               end if;
             end if;
