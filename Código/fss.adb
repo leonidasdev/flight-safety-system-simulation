@@ -133,6 +133,109 @@ package body fss is
       end;
     end Current_Speed;
 
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 11),
+    --               Task_Control_Alabeo (prio 10),
+    --               Task_Control_Velocidad (prio 8),
+    --               Task_Deteccion_Obstaculos (prio 13).
+    --               Task_Display (prio 5).
+    -- Fuente del ceiling: ceiling = max(11,10,8,13,5) = 13.
+    -- Techo (ceiling) = 13.
+    protected Status_Record is
+      pragma Priority (13);
+      function Get_Altitude return Altitude_Samples_Type;
+      procedure Change_Altitude (A: in Altitude_Samples_Type);
+      function Get_Pilot_Power return Power_Samples_Type;
+      procedure Change_Pilot_Power (P: in Power_Samples_Type);
+      function Get_Speed return Speed_Samples_Type;
+      procedure Change_Speed (S: in Speed_Samples_Type);
+      function Get_Joystick return Joystick_Samples_Type;
+      procedure Change_Joystick (J: in Joystick_Samples_Type);
+      function Get_Pitch return Pitch_Samples_Type;
+      procedure Change_Pitch (P: in Pitch_Samples_Type);
+      function Get_Roll return Roll_Samples_Type;
+      procedure Change_Roll (R: in Roll_Samples_Type);
+      function Get_Message return String;
+      procedure Change_Message (M: in String);
+      function Get_Distance return Distance_Samples_Type;
+      procedure Change_Distance (D: in Distance_Samples_Type);
+    private
+      Altitude: Altitude_Samples_Type;
+      Pilot_Power: Power_Samples_Type;
+      Speed: Speed_Samples_Type;
+      Joystick: Joystick_Samples_Type;
+      Pitch: Pitch_Samples_Type;
+      Roll: Roll_Samples_Type;
+      Message: String;
+      Distance: Distance_Samples_Type;
+    end Status_Record;
+
+    protected body Status_Record is
+      function Get_Altitude return Altitude_Samples_Type is
+      begin
+        return Altitude;
+      end;
+      procedure Change_Altitude (A: in Altitude_Samples_Type) is
+      begin
+        Altitude := A;
+      end;
+      function Get_Pilot_Power return Power_Samples_Type is
+      begin
+        return Pilot_Power;
+      end;
+      procedure Change_Pilot_Power (P: in Power_Samples_Type) is
+      begin
+        Pilot_Power := P;
+      end;
+      function Get_Speed return Speed_Samples_Type is
+      begin
+        return Speed;
+      end;
+      procedure Change_Speed (S: in Speed_Samples_Type) is
+      begin
+        Speed := S;
+      end;
+      function Get_Joystick return Joystick_Samples_Type is
+      begin
+        return Joystick;
+      end;
+      procedure Change_Joystick (J: in Joystick_Samples_Type) is
+      begin
+        Joystick := J;
+      end;
+      function Get_Pitch return Pitch_Samples_Type is
+      begin
+        return Pitch;
+      end;
+      procedure Change_Pitch (P: in Pitch_Samples_Type) is
+      begin
+        Pitch := P;
+      end;
+      function Get_Roll return Roll_Samples_Type is
+      begin
+        return Roll;
+      end;
+      procedure Change_Roll (R: in Roll_Samples_Type) is
+      begin
+        Roll := R;
+      end;
+      function Get_Message return String is
+      begin
+        return Message;
+      end;
+      procedure Change_Message (M: in String) is
+      begin
+        Message := M;
+      end;
+      function Get_Distance return Distance_Samples_Type is
+      begin
+        return Distance;
+      end;
+      procedure Change_Distance (D: in Distance_Samples_Type) is
+      begin
+        Distance := D;
+      end;
+    end Status_Record;
+
     -----------------------------------------------------------------------
     ------------- declaration of tasks 
     -----------------------------------------------------------------------
@@ -154,6 +257,10 @@ package body fss is
     task Task_Deteccion_Obstaculos is
         pragma Priority (13);
     end Task_Deteccion_Obstaculos;
+
+    task Task_Display is
+        pragma Priority (5);
+    end Task_Display;
 
     -----------------------------------------------------------------------
     ------------- body of tasks 
@@ -440,6 +547,50 @@ package body fss is
             Next_Instance := Next_Instance + Interval;
         end loop;
     end Task_Deteccion_Obstaculos;
+
+    task body Task_Display is
+        Next_Instance: Time;
+        Interval: constant Time_Span := Milliseconds(1000);
+
+        Altitude: Altitude_Samples_Type := 0;
+        Pilot_Power: Power_Samples_Type := 0;
+        Speed: Speed_Samples_Type := 0;
+        Joystick: Joystick_Samples_Type := (0,0);
+        Pitch: Pitch_Samples_Type := 0;
+        Roll: Roll_Samples_Type := 0;
+        Message: String := "";
+        Distance: Distance_Samples_Type := 0;
+    begin
+        Next_Instance := Big_Bang + Interval;
+        loop
+            Start_Activity ("Task_Display");
+
+            -- Lee todas las variables
+            Altitude := Status_Record.Get_Altitude;
+            Pilot_Power := Status_Record.Get_Pilot_Power;
+            Speed := Status_Record.Get_Speed;
+            Joystick := Status_Record.Get_Joystick;
+            Pitch := Status_Record.Get_Pitch;
+            Roll := Status_Record.Get_Roll;
+            Joystick := Status_Record.Get_Joystick;
+            Message := Status_Record.Get_Message;
+            Distance := Status_Record.Get_Distance;
+
+            -- Muestra en display
+            Display_Altitude (Altitude);
+            Display_Pilot_Power (Pilot_Power);
+            Display_Speed (Speed);
+            Display_Joystick (Joystick);
+            Display_Pitch (Pitch);
+            Display_Roll (Roll);
+            Display_Message (Message);
+            Display_Distance (Distance);
+
+            Finish_Activity ("Task_Display");
+            delay until Next_Instance;
+            Next_Instance := Next_Instance + Interval;
+        end loop;
+    end Task_Display;
 
     ----------------------------------------------------------------------
     ------------- procedimientos para probar los dispositivos 
