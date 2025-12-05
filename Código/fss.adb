@@ -413,7 +413,6 @@ package body fss is
             -- Maniobra de emergencia
             if (Emergency_Active) then
               -- 45 grados roll a la derecha durante 3 segundos
-              -- TODO Plazo maximo de 80 milisegundos para ejecutar la maniobra
               Roll.Change_Aircraft_Roll_Emergency (Emergency_Roll);
               Iteration := Iteration + 1;
               
