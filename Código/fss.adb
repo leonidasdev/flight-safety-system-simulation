@@ -16,9 +16,14 @@ with devicesFSS_V1; use devicesFSS_V1;
 -- Control de cabeceo y altitud (Task_Control_Cabeceo_Altitud)
 -- Control de alabeo (Task_Control_Alabeo)
 -- Control de velocidad (Task_Control_Velocidad)
+-- Control de display (Task_Display)
 
 -- Objetos protegidos implementados:
 -- Sincronizacion de datos de joystick (Pitch_Roll_Command)
+-- Control de pitch de la aeronave (Pitch)
+-- Control de alabeo de la aeronave (Roll)
+-- Control de velocidad actual (Current_Speed)
+-- Registro de estado compartido (Status_Record)
 
 -- NO ACTIVAR ESTE PAQUETE MIENTRAS NO SE TENGA PROGRAMADA LA INTERRUPCION
 -- Packages needed to generate button interrupts       
@@ -171,7 +176,7 @@ package body fss is
       Joystick: Joystick_Samples_Type;
       Pitch: Pitch_Samples_Type;
       Roll: Roll_Samples_Type;
-      Message: String;
+      Message: String (1 .. 32) := (others => ' ');
       Distance: Distance_Samples_Type;
       Message_Received: Boolean := False;
       Distance_Received: Boolean := False;
@@ -335,7 +340,7 @@ package body fss is
 
           -- Se establece un margen de +3/-3º, entre los cuales la nave permanece horizontal
           -- Si pitch deseado se encuentra entre +30/-30 grados el FSS lo refleja en la posicion de la nave
-          if (Target_Pitch < Margin_Upper_Pitch and Target_Pitch > Margin_Lower_Pitch) then
+          if (Target_Pitch > Margin_Lower_Pitch and Target_Pitch < Margin_Upper_Pitch) then
             Pitch.Change_Aircraft_Pitch (0);
           elsif (Target_Pitch > Min_Pitch and Target_Pitch < Max_Pitch) then
             Pitch.Change_Aircraft_Pitch (Target_Pitch);
@@ -406,7 +411,7 @@ package body fss is
 
           -- Se establece un margen de +3/-3º, entre los cuales la nave permanece horizontal
           -- Si roll se encuentra entre +45/-45 grados el FSS lo refleja en la posicion de la nave
-          if (Target_Roll < Margin_Upper_Roll and Target_Roll > Margin_Lower_Roll) then
+          if (Target_Roll > Margin_Lower_Roll and Target_Roll < Margin_Upper_Roll) then
             Roll.Change_Aircraft_Roll (0);
           elsif (Target_Roll > Min_Roll and Target_Roll < Max_Roll) then
             Roll.Change_Aircraft_Roll (Target_Roll);
