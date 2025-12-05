@@ -158,6 +158,12 @@ package body fss is
       procedure Change_Message (M: in String);
       function Get_Distance return Distance_Samples_Type;
       procedure Change_Distance (D: in Distance_Samples_Type);
+      function Get_Message_Received return Boolean;
+      function Get_Distance_Received return Boolean;
+      procedure Mark_Message_Received;
+      procedure Mark_Distance_Received;
+      procedure Clear_Message_Received;
+      procedure Clear_Distance_Received;
     private
       Altitude: Altitude_Samples_Type;
       Pilot_Power: Power_Samples_Type;
@@ -167,6 +173,8 @@ package body fss is
       Roll: Roll_Samples_Type;
       Message: String;
       Distance: Distance_Samples_Type;
+      Message_Received: Boolean := False;
+      Distance_Received: Boolean := False;
     end Status_Record;
 
     protected body Status_Record is
@@ -234,6 +242,30 @@ package body fss is
       begin
         Distance := D;
       end;
+      function Get_Message_Received return Boolean is
+      begin
+        return Message_Received;
+      end;
+      function Get_Distance_Received return Boolean is
+      begin
+        return Distance_Received;
+      end;
+      procedure Mark_Message_Received is
+      begin
+        Message_Received := True;
+      end;
+      procedure Mark_Distance_Received is
+      begin
+        Distance_Received := True;
+      end;
+      procedure Clear_Message_Received is
+      begin
+        Message_Received := False;
+      end;
+      procedure Clear_Distance_Received is
+      begin
+        Distance_Received := False;
+      end;
     end Status_Record;
 
     -----------------------------------------------------------------------
@@ -278,6 +310,9 @@ package body fss is
 
         Target_Pitch: Pitch_Samples_Type := 0;
 
+        Record_Update_Iteration: Integer range 0 .. 5 := 0;
+
+        Max_Record_Update_Iterations: constant Integer := 5; -- 1000ms / 200ms = 5 iteraciones para actualizar pitch y altitud
         Max_Pitch: constant Pitch_Samples_Type := 30;
         Min_Pitch: constant Pitch_Samples_Type := -30;
         Margin_Upper_Pitch: constant Pitch_Samples_Type := 3;
@@ -320,10 +355,16 @@ package body fss is
             Light_2 (On);
           end if;
 
-          -- Display de pitch y altitud
-          Current_P := Read_Pitch;
-          Display_Pitch (Current_P);
-          Display_Altitude (Current_A);
+          -- Actualizar display de pitch y altitud
+          if Record_Update_Iteration = 0 then
+            -- Leer pitch de la aeronave asegurar valor real
+            Current_P := Read_Pitch;
+            Status_Record.Change_Pitch (Current_P);
+            Status_Record.Change_Altitude (Current_A);
+            Record_Update_Iteration := Max_Record_Update_Iterations;
+          else
+            Record_Update_Iteration := Record_Update_Iteration - 1;
+          end if;
 
           Finish_Activity ("Task_Control_Cabeceo_Altitud");
           -- Se realiza 5 veces por segundo
@@ -341,6 +382,9 @@ package body fss is
         
         Target_Roll: Roll_Samples_Type; 
 
+        Record_Update_Iteration: Integer range 0 .. 5 := 0;
+
+        Max_Record_Update_Iterations: constant Integer := 5; -- 1000ms / 200ms = 5 iteraciones para actualizar roll
         Min_Roll: constant Roll_Samples_Type := -45;
         Max_Roll: constant Roll_Samples_Type := 45;
         Margin_Upper_Roll: constant Roll_Samples_Type := 3;
@@ -369,13 +413,19 @@ package body fss is
             Current_R := Target_Roll;
           end if;
 
-          -- Mensaje en display en caso de roll alto o bajo
+          -- Actualizar mensaje en display en caso de roll alto o bajo
           if (Current_R < Low_Roll or Current_R > High_Roll) then
-            Display_Message (Warning_Message);
+            Status_Record.Change_Message (Warning_Message);
+            Status_Record.Mark_Message_Received;
           end if;
 
-          -- Display de roll
-          Display_Roll (Current_R);
+          -- Actualizar display de roll
+          if Record_Update_Iteration = 0 then
+            Status_Record.Change_Roll (Current_R);
+            Record_Update_Iteration := Max_Record_Update_Iterations;
+          else
+            Record_Update_Iteration := Record_Update_Iteration - 1;
+          end if;
 
           Finish_Activity ("Task_Control_Alabeo");
           -- Se realiza 5 veces por segundo
@@ -396,7 +446,10 @@ package body fss is
         Input_Speed: Speed_Samples_Type := 0;
         Target_Pitch: Pitch_Samples_Type := 0;
         Target_Roll: Roll_Samples_Type := 0; 
-        
+
+        Record_Update_Iteration: Integer range 0 .. 3 := 0;
+
+        Max_Record_Update_Iterations: constant Integer := 3; -- 1000ms / 300ms = 3 aproximadas iteraciones para actualizar velocidad
         Pitch_Roll_Additional_Speed: constant Speed_Samples_Type := 200;
         Pitch_Additional_Speed: constant Speed_Samples_Type := 150;
         Roll_Additional_Speed: constant Speed_Samples_Type := 100;
@@ -407,10 +460,9 @@ package body fss is
         loop
             Start_Activity ("Task_Control_Velocidad");        
                        
-            -- Lee potencia del piloto y muestra al piloto
+            -- Lee potencia del piloto
             Read_Power (Current_Pw); 
-            Display_Pilot_Power (Current_Pw);
-                          
+
             -- Transfiere la potencia/velocidad a la aeronave
             Calculated_S := Speed_Samples_type (float (Current_Pw) * 1.2); -- aplicar fórmula
             
@@ -446,9 +498,17 @@ package body fss is
             end if;
             Set_Speed (Input_Speed);
 
-            -- Display de velocidad
-            Current_S := Current_Speed.Get_Speed;
-            Display_Speed(Current_S);
+            -- Actualizar display de velocidad, potencia del piloto y joystick
+            if Record_Update_Iteration = 0 then
+              -- Leer speed de la aeronave asegurar valor real
+              Current_S := Current_Speed.Get_Speed;
+              Status_Record.Change_Speed (Current_S);
+              Status_Record.Change_Pilot_Power (Current_Pw);
+              Status_Record.Change_Joystick (Current_J);
+              Record_Update_Iteration := Max_Record_Update_Iterations;
+            else
+              Record_Update_Iteration := Record_Update_Iteration - 1;
+            end if;
 
             Finish_Activity ("Task_Control_Velocidad");
             delay until Next_Instance;
@@ -469,10 +529,10 @@ package body fss is
         Alarm_Time_Threshold: Duration;
         Time_Collision_Threshold: Duration;
 
-        Iteration: Integer := 0;
+        Emergency_Iteration: Integer := 0;
         Emergency_Active: Boolean := False;
 
-        Max_Iterations: constant Integer := 12; -- 3000ms / 250ms = 12 iteraciones para manterner el roll de emergencia 
+        Max_Emergency_Iterations: constant Integer := 12; -- 3000ms / 250ms = 12 iteraciones para manterner el roll de emergencia 
         Light_Threshold: constant Light_Samples_Type := 500;
         Max_D: constant Distance_Samples_Type := 5000;
         Alarm_Time_Threshold_General: constant Duration := 10.0;
@@ -514,16 +574,16 @@ package body fss is
             if (Time_Collision < Time_Collision_Threshold) then
               Roll.Activate_Emergency;
               Emergency_Active := True;
-              Iteration := 0;
+              Emergency_Iteration := 0;
             end if;
 
             -- Maniobra de emergencia
             if (Emergency_Active) then
               -- 45 grados roll a la derecha durante 3 segundos
               Roll.Change_Aircraft_Roll_Emergency (Emergency_Roll);
-              Iteration := Iteration + 1;
+              Emergency_Iteration := Emergency_Iteration + 1;
               
-              if (Iteration >= Max_Iterations) then
+              if (Emergency_Iteration >= Max_Emergency_Iterations) then
                 -- Estabilizar roll
                 Roll.Change_Aircraft_Roll_Emergency (0);
                 -- Terminar maniobra de emergencia
@@ -532,9 +592,10 @@ package body fss is
               end if;
             end if;
 
-            -- Indicar distancia de obstaculo si existe
+            -- Actualizar display de distancia de obstaculo si existe
             if (Current_D <= Max_D) then
-              Display_Distance (Current_D);
+              Status_Record.Change_Distance (Current_D);
+              Status_Record.Mark_Distance_Received;
             end if;
 
             -- Aviso a piloto 
@@ -560,6 +621,8 @@ package body fss is
         Roll: Roll_Samples_Type := 0;
         Message: String := "";
         Distance: Distance_Samples_Type := 0;
+        Message_Received: Boolean := False;
+        Distance_Received: Boolean := False;
     begin
         Next_Instance := Big_Bang + Interval;
         loop
@@ -572,9 +635,14 @@ package body fss is
             Joystick := Status_Record.Get_Joystick;
             Pitch := Status_Record.Get_Pitch;
             Roll := Status_Record.Get_Roll;
-            Joystick := Status_Record.Get_Joystick;
-            Message := Status_Record.Get_Message;
-            Distance := Status_Record.Get_Distance;
+            Message_Received := Status_Record.Get_Message_Received;
+            Distance_Received := Status_Record.Get_Distance_Received;
+            if (Message_Received) then
+              Message := Status_Record.Get_Message;
+            end if;
+            if (Distance_Received) then
+              Distance := Status_Record.Get_Distance;
+            end if; 
 
             -- Muestra en display
             Display_Altitude (Altitude);
@@ -583,8 +651,16 @@ package body fss is
             Display_Joystick (Joystick);
             Display_Pitch (Pitch);
             Display_Roll (Roll);
-            Display_Message (Message);
-            Display_Distance (Distance);
+            if (Message_Received) then
+              Display_Message (Message);
+            end if;
+            if (Distance_Received) then
+              Display_Distance (Distance);
+            end if;
+
+            -- Limpiar flags de mensajes y distancia recibidos despues de mostrarlo
+            Status_Record.Clear_Message_Received;
+            Status_Record.Clear_Distance_Received;
 
             Finish_Activity ("Task_Display");
             delay until Next_Instance;
