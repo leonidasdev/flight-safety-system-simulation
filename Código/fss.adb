@@ -2,6 +2,7 @@
 with Kernel.Serial_Output; use Kernel.Serial_Output;
 with Ada.Real_Time; use Ada.Real_Time;
 with System; use System;
+with Ada.Interrupts.Names;
 
 with Tools; use Tools;
 with devicesFSS_V1; use devicesFSS_V1;
@@ -273,6 +274,55 @@ package body fss is
       end;
     end Status_Record;
 
+    -- Accedido por: Task_Control_Cabeceo_Altitud (prio 11),
+    --               Task_Control_Alabeo (prio 10),
+    --               Task_Control_Velocidad (prio 8),
+    --               Task_Deteccion_Obstaculos (prio 13).
+    --               Task_Display (prio 5).
+    --               Task_Mode (prio 7).
+    -- Fuente del ceiling: ceiling = max(11,10,8,13,5,7) = 13.
+    -- Techo (ceiling) = 13.
+    protected Selected_Mode is
+      pragma Priority (13);
+      function Is_Automatic return Boolean;
+      procedure Toggle_Mode;
+    private
+      Automatic: Boolean := True;  -- False=Manual, True=Automatic
+    end Selected_Mode;
+
+    protected body Selected_Mode is
+      function Is_Automatic return Boolean is
+      begin
+        return Automatic;
+      end;
+      procedure Toggle_Mode is
+      begin
+        Automatic := not Automatic;
+      end;
+    end Selected_Mode;
+
+    -- Accedido por: Tarea esporádica asociada a la interrupción del botón.
+    protected Interruption_Handler is
+      pragma Priority (20);
+      procedure Interruption;
+      pragma Attach_Handler (Interruption, Ada.Interrupts.Names.External_Interrupt_2);
+      entry Wait_Event;
+    private
+      Pending_Call : Boolean := False;
+    end Interruption_Handler;
+
+    protected body Interruption_Handler is
+      procedure Interruption is
+      begin
+        Pending_Call := True;
+      end Interruption;
+
+      entry Wait_Event when Pending_Call is
+      begin
+        Pending_Call := False;
+      end Wait_Event;
+    end Interruption_Handler;
+
     -----------------------------------------------------------------------
     ------------- declaration of tasks 
     -----------------------------------------------------------------------
@@ -298,6 +348,10 @@ package body fss is
     task Task_Display is
         pragma Priority (5);
     end Task_Display;
+
+    task Task_Mode is
+        pragma Priority (7);
+    end Task_Mode;
 
     -----------------------------------------------------------------------
     ------------- body of tasks 
@@ -672,6 +726,25 @@ package body fss is
             Next_Instance := Next_Instance + Interval;
         end loop;
     end Task_Display;
+
+    task body Task_Mode is
+        Next_Instance: Time;
+        Interval: constant Time_Span := Milliseconds(330);
+    begin
+        Next_Instance := Big_Bang + Interval;
+        loop
+            Start_Activity ("Task_Mode");
+
+            Interruption_Handler.Wait_Event;
+
+            -- Cambia el modo de vuelo
+            Selected_Mode.Toggle_Mode;
+
+            Finish_Activity ("Task_Mode");
+            delay until Next_Instance;
+            Next_Instance := Next_Instance + Interval;
+        end loop;
+    end Task_Mode;
 
     ----------------------------------------------------------------------
     ------------- procedimientos para probar los dispositivos 
