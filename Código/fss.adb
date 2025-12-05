@@ -576,7 +576,7 @@ package body fss is
             end if;
 
             -- Maniobra de desvio automatico
-            if (Time_Collision < Time_Collision_Threshold) then
+            if (Time_Collision < Time_Collision_Threshold and not Emergency_Active) then
               Roll.Activate_Emergency;
               Emergency_Active := True;
               Emergency_Iteration := 0;
