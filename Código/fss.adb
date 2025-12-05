@@ -173,6 +173,8 @@ package body fss is
 
         Max_Pitch: constant Pitch_Samples_Type := 30;
         Min_Pitch: constant Pitch_Samples_Type := -30;
+        Margin_Upper_Pitch: constant Pitch_Samples_Type := 3;
+        Margin_Lower_Pitch: constant Pitch_Samples_Type := -3;
         Low_Altitude: constant Altitude_Samples_Type := 2500;
         High_Altitude: constant Altitude_Samples_Type := 9500;
         Min_Altitude: constant Altitude_Samples_Type := 2000;
@@ -189,8 +191,11 @@ package body fss is
           -- Establece Pitch deseado en la aeronave
           Target_Pitch := Pitch_Samples_Type (Current_J(x));
 
+          -- Se establece un margen de +3/-3º, entre los cuales la nave permanece horizontal
           -- Si pitch deseado se encuentra entre +30/-30 grados el FSS lo refleja en la posicion de la nave
-          if (Target_Pitch > Min_Pitch and Target_Pitch < Max_Pitch) then
+          if (Target_Pitch < Margin_Upper_Pitch and Target_Pitch > Margin_Lower_Pitch) then
+            Pitch.Change_Aircraft_Pitch (0);
+          elsif (Target_Pitch > Min_Pitch and Target_Pitch < Max_Pitch) then
             Pitch.Change_Aircraft_Pitch (Target_Pitch);
           end if;
 
@@ -231,6 +236,8 @@ package body fss is
 
         Min_Roll: constant Roll_Samples_Type := -45;
         Max_Roll: constant Roll_Samples_Type := 45;
+        Margin_Upper_Roll: constant Roll_Samples_Type := 3;
+        Margin_Lower_Roll: constant Roll_Samples_Type := -3;
         Low_Roll: constant Roll_Samples_Type := -35;
         High_Roll: constant Roll_Samples_Type := 35;
         Warning_Message: constant String := "WARNING: HIGH ROLL ANGLE!";
@@ -246,8 +253,11 @@ package body fss is
           -- Establece Roll deseado en la aeronave
           Target_Roll := Roll_Samples_Type (Current_J(y));
 
+          -- Se establece un margen de +3/-3º, entre los cuales la nave permanece horizontal
           -- Si roll se encuentra entre +45/-45 grados el FSS lo refleja en la posicion de la nave
-          if (Target_Roll > Min_Roll and Target_Roll < Max_Roll) then
+          if (Target_Roll < Margin_Upper_Roll and Target_Roll > Margin_Lower_Roll) then
+            Roll.Change_Aircraft_Roll (0);
+          elsif (Target_Roll > Min_Roll and Target_Roll < Max_Roll) then
             Roll.Change_Aircraft_Roll (Target_Roll);
             Current_R := Target_Roll;
           end if;
