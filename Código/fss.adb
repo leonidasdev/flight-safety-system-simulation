@@ -302,7 +302,7 @@ package body fss is
       end;
     end Selected_Mode;
 
-    -- Tarea esporádica asociada a la interrupción del botón.
+    -- Accedido por: Tarea esporádica asociada a la interrupción del botón.
     protected Interruption_Handler is
       pragma Priority (20);
       procedure Interruption;
