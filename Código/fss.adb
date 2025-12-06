@@ -581,7 +581,7 @@ package body fss is
                Light_2 (On);
             else
               Input_Speed := Calculated_S;
-              Light_2 (Off);
+               Light_2 (Off);
             end if;
 
             -- En modo automatico actualizar velocidad de la aeronave
