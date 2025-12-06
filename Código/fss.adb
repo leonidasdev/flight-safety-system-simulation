@@ -483,9 +483,8 @@ package body fss is
       loop
           Start_Activity ("Task_Control_Alabeo");  
 
-          -- Lee Joystick del piloto y roll de la aeronave
+          -- Lee Joystick del piloto de la aeronave
           Pitch_Roll_Command.Get_Joystick (Current_J);
-          Current_R := Roll.Get_Aircraft_Roll;
           
           -- Establece Roll deseado en la aeronave
           Target_Roll := Roll_Samples_Type (Current_J(y));
@@ -500,9 +499,11 @@ package body fss is
           elsif (Target_Roll > Min_Roll and Target_Roll < Max_Roll) then
             if Selected_Mode.Is_Automatic then
               Roll.Change_Aircraft_Roll (Target_Roll);
-              Current_R := Target_Roll;
             end if;
           end if;
+
+          -- Leer roll de la aeronave asegurar valor real
+          Current_R := Roll.Get_Aircraft_Roll;
 
           -- Actualizar mensaje en display en caso de roll alto o bajo
           if (Current_R < Low_Roll or Current_R > High_Roll) then
