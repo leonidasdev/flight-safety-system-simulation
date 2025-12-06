@@ -24,7 +24,7 @@ with devicesFSS_V1; use devicesFSS_V1;
 -- Sincronizacion de datos de joystick (Pitch_Roll_Command)
 -- Control de pitch de la aeronave (Pitch)
 -- Control de alabeo de la aeronave (Roll)
--- Control de velocidad actual (Current_Speed)
+-- Control de velocidad actual (Speed)
 -- Registro de estado compartido (Status_Record)
 -- Seleccion de modo automatico/manual (Selected_Mode)
 -- Interrupcion del boton (Interruption_Handler)
@@ -130,17 +130,22 @@ package body fss is
     --               Task_Deteccion_Obstaculos (prio 13).
     -- Fuente del ceiling: ceiling = max(8,13) = 13.
     -- Techo (ceiling) = 13.
-    protected Current_Speed is
+    protected Speed is
       pragma Priority (13);
       function Get_Speed return Speed_Samples_Type;
-    end Current_Speed;
+      procedure Change_Speed (S: in Speed_Samples_Type);
+    end Speed;
 
-    protected body Current_Speed is
+    protected body Speed is
       function Get_Speed return Speed_Samples_Type is
       begin
         return Read_Speed;
       end;
-    end Current_Speed;
+      procedure Change_Speed (S: in Speed_Samples_Type) is
+      begin
+        Set_Speed (S);
+      end Change_Speed;
+    end Speed;
 
     -- Accedido por: Task_Control_Cabeceo_Altitud (prio 11),
     --               Task_Control_Alabeo (prio 10),
@@ -373,7 +378,7 @@ package body fss is
 
         Record_Update_Iteration: Integer range 0 .. 5 := 0;
 
-        Max_Record_Update_Iterations: constant Integer := 5; -- 1000ms / 200ms = 5 iteraciones para actualizar pitch y altitud
+        Max_Record_Update_Iterations: constant Integer := 5; -- 1000ms / 200ms = 5 iteraciones para actualizar pitch y altitud de Status_Record
         Max_Pitch: constant Pitch_Samples_Type := 30;
         Min_Pitch: constant Pitch_Samples_Type := -30;
         Margin_Upper_Pitch: constant Pitch_Samples_Type := 3;
@@ -453,7 +458,7 @@ package body fss is
 
         Record_Update_Iteration: Integer range 0 .. 5 := 0;
 
-        Max_Record_Update_Iterations: constant Integer := 5; -- 1000ms / 200ms = 5 iteraciones para actualizar roll
+        Max_Record_Update_Iterations: constant Integer := 5; -- 1000ms / 200ms = 5 iteraciones para actualizar roll de Status_Record
         Min_Roll: constant Roll_Samples_Type := -45;
         Max_Roll: constant Roll_Samples_Type := 45;
         Margin_Upper_Roll: constant Roll_Samples_Type := 3;
@@ -523,7 +528,7 @@ package body fss is
 
         Record_Update_Iteration: Integer range 0 .. 3 := 0;
 
-        Max_Record_Update_Iterations: constant Integer := 3; -- 1000ms / 300ms = 3 aproximadas iteraciones para actualizar velocidad
+        Max_Record_Update_Iterations: constant Integer := 3; -- 1000ms / 300ms = 3 aproximadas iteraciones para actualizar velocidad de Status_Record
         Pitch_Roll_Additional_Speed: constant Speed_Samples_Type := 200;
         Pitch_Additional_Speed: constant Speed_Samples_Type := 150;
         Roll_Additional_Speed: constant Speed_Samples_Type := 100;
@@ -573,13 +578,13 @@ package body fss is
 
             -- En modo automatico actualizar velocidad de la aeronave
             if Selected_Mode.Is_Automatic then
-              Set_Speed (Input_Speed);
+              Speed.Change_Speed (Input_Speed);
             end if;
 
             -- Actualizar display de velocidad, potencia del piloto y joystick
             if Record_Update_Iteration = 0 then
               -- Leer speed de la aeronave asegurar valor real
-              Current_S := Current_Speed.Get_Speed;
+              Current_S := Speed.Get_Speed;
               Status_Record.Change_Speed (Current_S);
               Status_Record.Change_Pilot_Power (Current_Pw);
               Status_Record.Change_Joystick (Current_J);
@@ -626,7 +631,7 @@ package body fss is
             -- Detectar variables externas
             Read_Distance(Current_D);
             Read_Light_Intensity(Current_L);
-            Current_S := Current_Speed.Get_Speed;
+            Current_S := Speed.Get_Speed;
             Current_P := Read_PilotPresence;
             
             -- Calcular tiempo de colision
