@@ -16,6 +16,7 @@ with devicesFSS_V1; use devicesFSS_V1;
 -- Control de cabeceo y altitud (Task_Control_Cabeceo_Altitud)
 -- Control de alabeo (Task_Control_Alabeo)
 -- Control de velocidad (Task_Control_Velocidad)
+-- Deteccion de obstaculos (Task_Deteccion_Obstaculos)
 -- Control de display (Task_Display)
 -- Control de modo automatico/manual (Task_Mode)
 
