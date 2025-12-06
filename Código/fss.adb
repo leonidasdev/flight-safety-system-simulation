@@ -432,13 +432,11 @@ package body fss is
             end if;
           end if;
 
-          -- Alerta mediante luces en caso de altitud alta o baja
-          if (Current_A < Low_Altitude) then
-            Light_2 (Off);
+          -- Alerta mediante luz 1 en caso de altitud alta o baja
+          if (Current_A < Low_Altitude or Current_A > High_Altitude) then
             Light_1 (On);
-          elsif (Current_A > High_Altitude) then
+          else
             Light_1 (Off);
-            Light_2 (On);
           end if;
 
           -- Actualizar display de pitch y altitud
@@ -574,19 +572,16 @@ package body fss is
                Calculated_S := Calculated_S + Roll_Additional_Speed;
             end if;
 
-            -- Control alta velocidad y luces
-            if Calculated_S > Max_Speed then
+            -- Control alta y baja velocidad y luz 2
+            if (Calculated_S > Max_Speed) then
                Input_Speed := Max_Speed;
-               Light_1 (Off);
                Light_2 (On);
-            elsif Calculated_S < Min_Speed then
+            elsif (Calculated_S < Min_Speed) then
                Input_Speed := Min_Speed;
-               Light_1 (Off);
                Light_2 (On);
             else
               Input_Speed := Calculated_S;
               Light_2 (Off);
-              Light_1 (On);
             end if;
 
             -- En modo automatico actualizar velocidad de la aeronave
