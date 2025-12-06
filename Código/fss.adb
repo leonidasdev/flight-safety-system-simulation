@@ -77,10 +77,16 @@ package body fss is
     -- Techo (ceiling) = 11.
     protected Pitch is
       pragma Priority (11);
+      function Get_Aircraft_Pitch return Pitch_Samples_Type;
       procedure Change_Aircraft_Pitch (P: in Pitch_Samples_Type);
     end Pitch;
 
     protected body Pitch is
+      function Get_Aircraft_Pitch return Pitch_Samples_Type is
+      begin
+        return Read_Pitch;
+      end Get_Aircraft_Pitch;
+
       procedure Change_Aircraft_Pitch (P: in Pitch_Samples_Type) is
       begin
         Set_Aircraft_Pitch (P);
@@ -93,6 +99,7 @@ package body fss is
     -- Techo (ceiling) = 13.
     protected Roll is
       pragma Priority (13);
+      function Get_Aircraft_Roll return Roll_Samples_Type;
       procedure Change_Aircraft_Roll (R: in Roll_Samples_Type);
       procedure Change_Aircraft_Roll_Emergency (R: in Roll_Samples_Type);
       procedure Activate_Emergency;
@@ -102,6 +109,11 @@ package body fss is
     end Roll;
 
     protected body Roll is
+      function Get_Aircraft_Roll return Roll_Samples_Type is
+      begin
+        return Read_Roll;
+      end Get_Aircraft_Roll;
+
       procedure Change_Aircraft_Roll (R: in Roll_Samples_Type) is
       begin
         if not Emergency_Active then
@@ -432,7 +444,7 @@ package body fss is
           -- Actualizar display de pitch y altitud
           if Record_Update_Iteration = 0 then
             -- Leer pitch de la aeronave asegurar valor real
-            Current_P := Read_Pitch;
+            Current_P := Pitch.Get_Aircraft_Pitch;
             Status_Record.Change_Pitch (Current_P);
             Status_Record.Change_Altitude (Current_A);
             Record_Update_Iteration := Max_Record_Update_Iterations;
@@ -473,7 +485,7 @@ package body fss is
 
           -- Lee Joystick del piloto y roll de la aeronave
           Pitch_Roll_Command.Get_Joystick (Current_J);
-          Current_R := Read_Roll;
+          Current_R := Roll.Get_Aircraft_Roll;
           
           -- Establece Roll deseado en la aeronave
           Target_Roll := Roll_Samples_Type (Current_J(y));
