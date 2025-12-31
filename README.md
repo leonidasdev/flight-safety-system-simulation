@@ -163,7 +163,7 @@ The system implements the **Priority Ceiling Protocol** for resource management:
 
 ## License
 
-This is an academic project for educational purposes.
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
 
 ## Target Platform
 
